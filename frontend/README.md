@@ -1,4 +1,21 @@
-# React + TypeScript + Vite
+# ResearchPilot 前端
+
+React + TypeScript + Vite + Tailwind CSS + shadcn/ui + Recharts。
+
+## 启动说明
+
+前端通过 axios 请求 `/api` 接口，Vite 开发服务器会把 `/api` 代理到后端 `http://127.0.0.1:8000`，
+因此需要**先启动后端**（见 [../backend/README.md](../backend/README.md)），再启动前端：
+
+```bash
+cd frontend
+npm install        # 首次使用
+npm run dev        # 启动后访问 http://localhost:5173
+```
+
+常用命令：`npm run build`（类型检查 + 构建）、`npm run lint`（代码检查）。
+
+---
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 

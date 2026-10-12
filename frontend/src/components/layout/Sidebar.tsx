@@ -8,17 +8,34 @@ import {
   LayoutDashboard,
 } from 'lucide-react'
 import { cn } from 'cn'
-
-const NAV_ITEMS = [
-  { to: '/', label: '首页', icon: LayoutDashboard, end: true },
-  { to: '/projects/new', label: '新建项目', icon: FilePlus2 },
-  { to: '/board', label: '任务看板', icon: KanbanSquare },
-  { to: '/projects/1', label: '项目仪表盘', icon: BarChart3 },
-  { to: '/report', label: '周报生成', icon: FileText },
-]
+import { useEffect, useState } from 'react'
+import { fetchProjects } from '@/services/api'
 
 /** 左侧导航栏：Logo + 五个页面入口 */
 export function Sidebar() {
+  // 「项目仪表盘」指向最新一个项目；没有项目时引导去新建
+  const [firstProjectId, setFirstProjectId] = useState<number | null>(null)
+  useEffect(() => {
+    fetchProjects()
+      .then((list) => {
+        const first = list.find((p) => p.status === 'active') ?? list[0]
+        setFirstProjectId(first?.id ?? null)
+      })
+      .catch(() => setFirstProjectId(null))
+  }, [])
+
+  const navItems = [
+    { to: '/', label: '首页', icon: LayoutDashboard, end: true },
+    { to: '/projects/new', label: '新建项目', icon: FilePlus2 },
+    { to: '/board', label: '任务看板', icon: KanbanSquare },
+    {
+      to: firstProjectId !== null ? `/projects/${firstProjectId}` : '/projects/new',
+      label: '项目仪表盘',
+      icon: BarChart3,
+    },
+    { to: '/report', label: '周报生成', icon: FileText },
+  ]
+
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-border bg-card">
       <div className="flex items-center gap-2.5 px-5 py-5">
@@ -34,7 +51,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 px-3 pt-2">
-        {NAV_ITEMS.map((item) => (
+        {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
@@ -56,7 +73,7 @@ export function Sidebar() {
         <p className="text-xs leading-relaxed text-muted-foreground">
           科研任务智能管理
           <br />
-          演示数据预览版
+          数据存储在本机 SQLite
         </p>
       </div>
     </aside>

@@ -16,7 +16,13 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import type { Project } from '@/types'
+import type { Project, ProjectStatus } from '@/types'
+
+const STATUS_LABELS: Record<ProjectStatus, string> = {
+  active: '进行中',
+  completed: '已完成',
+  paused: '已暂停',
+}
 
 /** 风险徽章：状态色 + 图标 + 文字，绝不只用颜色传达含义 */
 function RiskBadge({ risk }: { risk: Project['risk'] }) {
@@ -51,7 +57,7 @@ export function ProjectCard({ project }: { project: Project }) {
           <div className="min-w-0">
             <CardTitle className="truncate">{project.name}</CardTitle>
             <Badge variant="secondary" className="mt-1.5 w-fit">
-              {project.category}
+              {STATUS_LABELS[project.status]}
             </Badge>
           </div>
           <RiskBadge risk={project.risk} />
@@ -96,7 +102,7 @@ export function ProjectCard({ project }: { project: Project }) {
         <Button variant="outline" size="sm" onClick={() => navigate(`/projects/${project.id}`)}>
           项目详情
         </Button>
-        <Button size="sm" onClick={() => navigate('/board')}>
+        <Button size="sm" onClick={() => navigate(`/board?project=${project.id}`)}>
           进入看板
           <ChevronRight className="size-3.5" />
         </Button>

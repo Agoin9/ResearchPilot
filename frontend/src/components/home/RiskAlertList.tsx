@@ -46,7 +46,7 @@ export function RiskAlertList({ riskTasks }: { riskTasks: RiskTask[] }) {
             variant="ghost"
             size="sm"
             className="shrink-0 text-primary"
-            onClick={() => navigate('/board')}
+            onClick={() => navigate(`/board?project=${task.projectId}`)}
           >
             去处理
             <ArrowRight className="size-3.5" />

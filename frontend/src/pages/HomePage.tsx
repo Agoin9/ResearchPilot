@@ -1,9 +1,7 @@
-import { Plus, RefreshCw } from 'lucide-react'
-import { useState } from 'react'
+import { FlaskConical, Plus, RefreshCw } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { EmptyState } from '@/components/common/EmptyState'
 import { ErrorState } from '@/components/common/ErrorState'
-import { DemoControlPanel } from '@/components/demo/DemoControlPanel'
 import { HomeSkeleton } from '@/components/home/HomeSkeleton'
 import { ProjectCard } from '@/components/home/ProjectCard'
 import { RiskAlertList } from '@/components/home/RiskAlertList'
@@ -13,16 +11,8 @@ import { TrendChart } from '@/components/home/TrendChart'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { toast } from '@/components/ui/toast'
-import { FlaskConical } from 'lucide-react'
 import { useAsyncData } from '@/hooks/useAsyncData'
-import {
-  fetchHomeData,
-  getEmptyMode,
-  getFailMode,
-  setEmptyMode,
-  setFailMode,
-} from '@/services/mockApi'
+import { fetchHomeData } from '@/services/api'
 
 const todayText = new Date().toLocaleDateString('zh-CN', {
   year: 'numeric',
@@ -31,37 +21,10 @@ const todayText = new Date().toLocaleDateString('zh-CN', {
   weekday: 'long',
 })
 
-/** 首页：统计概览 + 项目列表 + 风险提醒 + 图表 */
+/** 首页：统计概览 + 项目列表 + 风险提醒 + 图表（数据来自后端 /api/home） */
 export default function HomePage() {
   const navigate = useNavigate()
   const { data, loading, error, reload } = useAsyncData(fetchHomeData)
-  const [failMode, setFailModeState] = useState(getFailMode())
-  const [emptyMode, setEmptyModeState] = useState(getEmptyMode())
-
-  const handleToggleFail = (checked: boolean) => {
-    setFailModeState(checked)
-    setFailMode(checked)
-    toast.add({
-      title: checked
-        ? '已开启失败模拟：点击「刷新」即可看到错误提示'
-        : '已关闭失败模拟',
-      type: 'info',
-    })
-  }
-
-  const handleClearData = () => {
-    setEmptyModeState(true)
-    setEmptyMode(true)
-    void reload()
-    toast.add({ title: '已清空数据（模拟空数据状态）', type: 'success' })
-  }
-
-  const handleRestoreData = () => {
-    setEmptyModeState(false)
-    setEmptyMode(false)
-    void reload()
-    toast.add({ title: '已恢复示例数据', type: 'success' })
-  }
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
@@ -84,14 +47,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      <DemoControlPanel
-        failMode={failMode}
-        onToggleFail={handleToggleFail}
-        onClearData={handleClearData}
-        onRestoreData={handleRestoreData}
-        onRefresh={() => void reload()}
-      />
-
       {loading ? (
         <HomeSkeleton />
       ) : error ? (
@@ -100,13 +55,9 @@ export default function HomePage() {
         <EmptyState
           icon={FlaskConical}
           title="还没有科研项目"
-          description={
-            emptyMode
-              ? '当前为演示用的空数据状态，点击「恢复示例数据」即可回到示例内容。'
-              : '创建你的第一个科研项目，输入目标与截止时间，AI 将帮你拆解成可执行的任务看板。'
-          }
-          actionLabel={emptyMode ? '恢复示例数据' : '新建项目'}
-          onAction={emptyMode ? handleRestoreData : () => navigate('/projects/new')}
+          description="创建你的第一个科研项目，录入科研目标与截止时间，开始管理你的科研任务。"
+          actionLabel="新建项目"
+          onAction={() => navigate('/projects/new')}
         />
       ) : (
         <>
