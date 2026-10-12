@@ -246,6 +246,47 @@ export interface ReportInfo {
   updatedAt: string
 }
 
+/** 重规划：单条调整建议 */
+export interface ReplanChange {
+  taskId: number
+  action: 'reschedule' | 'reprioritize'
+  title: string
+  plannedStartDate: string | null
+  plannedEndDate: string | null
+  priority: TaskPriority | null
+  estimatedHours: number | null
+  reason: string
+}
+
+/** 重规划：任务快照（原计划） */
+export interface ReplanTaskSnapshot {
+  taskId: number
+  title: string
+  status: TaskStatus
+  progress: number
+  priority: TaskPriority
+  plannedStartDate: string | null
+  plannedEndDate: string | null
+  estimatedHours: number | null
+  riskLevel: RiskLevel
+  riskReasons: string[]
+}
+
+/** 重规划方案记录 */
+export interface ReplanInfo {
+  id: number
+  projectId: number
+  triggerType: string
+  planContent: string
+  impactSummary: string
+  changes: ReplanChange[]
+  originalTasks: ReplanTaskSnapshot[]
+  source: 'deepseek' | 'demo'
+  status: 'pending' | 'adopted' | 'rejected'
+  createdAt: string
+  decidedAt: string | null
+}
+
 /** 创建任务的入参 */
 export interface TaskInput {
   projectId: number

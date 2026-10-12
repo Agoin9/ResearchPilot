@@ -658,3 +658,52 @@ class ReportOut(CamelModel):
     source: str  # deepseek / demo
     created_at: datetime
     updated_at: datetime
+
+
+# ═══════════════════════ 重规划（风险预警 + 动态调整） ═══════════════════════
+
+class ReplanTaskSnapshot(CamelModel):
+    """重规划时的任务快照（原计划）。"""
+
+    task_id: int
+    title: str
+    status: str
+    progress: int
+    priority: str
+    planned_start_date: date | None
+    planned_end_date: date | None
+    estimated_hours: float | None
+    risk_level: str = "none"
+    risk_reasons: list[str] = []
+
+
+class ReplanChange(CamelModel):
+    """单条调整建议：改起止日期 / 改优先级 / 改预计工时。"""
+
+    task_id: int
+    action: str  # reschedule / reprioritize
+    title: str = ""
+    planned_start_date: date | None = None
+    planned_end_date: date | None = None
+    priority: str | None = None
+    estimated_hours: float | None = None
+    reason: str
+
+
+class ReplanOut(CamelModel):
+    id: int
+    project_id: int
+    trigger_type: str
+    plan_content: str
+    impact_summary: str
+    changes: list[ReplanChange]
+    original_tasks: list[ReplanTaskSnapshot]
+    source: str  # deepseek / demo
+    status: str  # pending / adopted / rejected
+    created_at: datetime
+    decided_at: datetime | None
+
+
+class ReplanAdoptOut(CamelModel):
+    replan: ReplanOut
+    applied_count: int

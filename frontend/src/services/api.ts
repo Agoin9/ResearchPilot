@@ -13,6 +13,7 @@ import type {
   ProjectDetail,
   ProjectInput,
   QaEntry,
+  ReplanInfo,
   ReportInfo,
   ReportType,
   Task,
@@ -236,4 +237,26 @@ export function updateReportContent(id: number, content: string): Promise<Report
 /** 导出 Markdown 的下载地址（同源，交给 <a download> 触发下载） */
 export function reportExportUrl(id: number): string {
   return `${client.defaults.baseURL}/reports/${id}/export`
+}
+
+/** 生成重规划方案（风险本地计算 + DeepSeek 调整建议，不修改任务） */
+export function generateReplan(projectId: number): Promise<ReplanInfo> {
+  return client.post(`/projects/${projectId}/replan`)
+}
+
+/** 接受重规划：应用调整到任务表 */
+export function adoptReplan(
+  id: number
+): Promise<{ replan: ReplanInfo; appliedCount: number }> {
+  return client.post(`/replans/${id}/adopt`)
+}
+
+/** 放弃重规划方案 */
+export function rejectReplan(id: number): Promise<ReplanInfo> {
+  return client.post(`/replans/${id}/reject`)
+}
+
+/** 重规划历史记录 */
+export function fetchReplans(projectId: number): Promise<ReplanInfo[]> {
+  return client.get(`/projects/${projectId}/replans`)
 }

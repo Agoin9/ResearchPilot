@@ -8,7 +8,9 @@ from app.services.risk import compute_project_risk, compute_task_risk
 
 def build_task_out(task: Task, today: date | None = None) -> TaskOut:
     today = today or date.today()
-    risk, risk_reason = compute_task_risk(task, today)
+    # 传入项目每周可用小时，启用"剩余工时不足"风险规则
+    weekly_hours = task.project.weekly_hours if task.project else None
+    risk, risk_reason = compute_task_risk(task, today, weekly_hours)
     return TaskOut(
         id=task.id,
         project_id=task.project_id,

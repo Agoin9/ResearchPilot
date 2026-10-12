@@ -12,6 +12,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ProjectBoard } from '@/components/board/ProjectBoard'
 import { ErrorState } from '@/components/common/ErrorState'
 import { DocumentLibraryTab } from '@/components/documents/DocumentLibraryTab'
+import { ReplanTab } from '@/components/replan/ReplanTab'
 import { ReportCenterTab } from '@/components/reports/ReportCenterTab'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -335,6 +336,7 @@ export default function ProjectDashboardPage() {
           <TabsTrigger value="board">任务看板</TabsTrigger>
           <TabsTrigger value="library">文献库</TabsTrigger>
           <TabsTrigger value="reports">汇报中心</TabsTrigger>
+          <TabsTrigger value="replan">重规划</TabsTrigger>
         </TabsList>
         <TabsContent value="board" className="pt-4">
           <ProjectBoard projectId={projectId} />
@@ -344,6 +346,9 @@ export default function ProjectDashboardPage() {
         </TabsContent>
         <TabsContent value="reports" className="pt-4">
           <ReportCenterTab projectId={projectId} />
+        </TabsContent>
+        <TabsContent value="replan" className="pt-4">
+          <ReplanTab projectId={projectId} />
         </TabsContent>
       </Tabs>
 
