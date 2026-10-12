@@ -113,6 +113,139 @@ export interface ProjectInput {
   weeklyHours: number
 }
 
+/** AI 科研计划中的单个任务（预览用，priority 为 高/中/低） */
+export interface AiPlanTask {
+  taskId: string
+  title: string
+  description: string
+  startDate: string
+  dueDate: string
+  priority: '高' | '中' | '低'
+  expectedDeliverable: string
+  dependencies: string[]
+  estimatedHours: number
+  rationale: string
+}
+
+/** 生成 AI 科研计划的输入 */
+export interface AiPlanInput {
+  topic: string
+  deadline: string
+  weeklyHours: number
+  currentStage: string
+  completedWork?: string | null
+}
+
+/** AI 科研计划生成结果 */
+export interface AiPlanResult {
+  /** deepseek = 真实生成；demo = 未配置 Key 的演示模式 */
+  source: 'deepseek' | 'demo'
+  tasks: AiPlanTask[]
+  warning: string
+}
+
+/** 周报：本周完成的任务 */
+export interface WeeklyCompletedTask {
+  id: number
+  title: string
+  completedAt: string
+}
+
+/** 周报：单条进度更新 */
+export interface WeeklyProgressItem {
+  taskTitle: string
+  progress: number
+  hoursSpent: number | null
+  note: string | null
+  createdAt: string
+}
+
+/** 周报：单个项目的本周活动 */
+export interface WeeklyProjectReport {
+  projectId: number
+  projectName: string
+  completedTasks: WeeklyCompletedTask[]
+  progressRecords: WeeklyProgressItem[]
+}
+
+/** 周报聚合数据 */
+export interface WeeklyReport {
+  weekStart: string
+  weekEnd: string
+  stats: {
+    tasksCompleted: number
+    hoursSpent: number
+    progressUpdates: number
+  }
+  projects: WeeklyProjectReport[]
+}
+
+/** AI 生成的周报正文 */
+export interface AiWeeklyReport {
+  source: 'deepseek' | 'demo'
+  content: string
+}
+
+/** 文献（上传的 PDF） */
+export interface DocumentInfo {
+  id: number
+  projectId: number
+  title: string
+  fileName: string
+  chunkCount: number
+  createdAt: string
+}
+
+/** 文献切片 */
+export interface DocChunk {
+  id: number
+  chunkIndex: number
+  content: string
+}
+
+/** 文献详情（含全文与切片） */
+export interface DocumentDetail extends DocumentInfo {
+  fullText: string
+  chunks: DocChunk[]
+}
+
+/** 回答中的引用片段 */
+export interface Citation {
+  chunkIndex: number
+  quote: string
+}
+
+/** 文献问答记录 */
+export interface QaEntry {
+  id: number
+  documentId: number
+  projectId: number
+  question: string
+  answer: string
+  citations: Citation[]
+  confidence: number
+  source: 'deepseek' | 'demo'
+  isSaved: boolean
+  createdAt: string
+}
+
+/** 汇报类型：meeting 组会周报 / supervisor 导师汇报 */
+export type ReportType = 'meeting' | 'supervisor'
+
+/** 组会周报与导师汇报 */
+export interface ReportInfo {
+  id: number
+  projectId: number
+  title: string
+  reportType: ReportType
+  weekStart: string | null
+  weekEnd: string | null
+  content: string
+  source: 'deepseek' | 'demo'
+  createdAt: string
+  updatedAt: string
+}
+
 /** 创建任务的入参 */
 export interface TaskInput {
   projectId: number

@@ -11,18 +11,21 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ProjectBoard } from '@/components/board/ProjectBoard'
 import { ErrorState } from '@/components/common/ErrorState'
+import { DocumentLibraryTab } from '@/components/documents/DocumentLibraryTab'
+import { ReportCenterTab } from '@/components/reports/ReportCenterTab'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
-import { Select, SelectContent, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { NativeSelect } from '@/components/ui/native-select'
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/components/ui/toast'
 import { useAsyncData } from '@/hooks/useAsyncData'
-import { deleteProject, fetchProjectDetail, updateProject } from '@/services/api'
+import { deleteProject, fetchProjectDetail, fetchProjects, updateProject } from '@/services/api'
 import type { ProjectStatus } from '@/types'
 
 const STATUS_LABELS: Record<ProjectStatus, string> = {
@@ -144,16 +147,11 @@ function EditProjectSheet({ open, onOpenChange, project, onSaved }: EditProjectS
           </div>
           <div className="flex flex-col gap-2">
             <Label>项目状态</Label>
-            <Select
+            <NativeSelect
               value={status}
-              onValueChange={(value) => setStatus((value as ProjectStatus) ?? 'active')}
+              onChange={(value) => setStatus((value || 'active') as ProjectStatus)}
               items={STATUS_ITEMS}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="选择状态" />
-              </SelectTrigger>
-              <SelectContent />
-            </Select>
+            />
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
@@ -179,6 +177,8 @@ export default function ProjectDashboardPage() {
   // 用 useCallback 固定 fetcher 引用，避免每次渲染生成新函数导致无限请求循环
   const loadDetail = useCallback(() => fetchProjectDetail(projectId), [projectId])
   const { data, loading, error, reload } = useAsyncData(loadDetail)
+  // 项目列表（顶部切换器用）
+  const { data: projectList } = useAsyncData(fetchProjects)
   const [editOpen, setEditOpen] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
 
@@ -216,6 +216,22 @@ export default function ProjectDashboardPage() {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
+      {projectList && projectList.length > 1 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm text-muted-foreground">切换项目</span>
+          <NativeSelect
+            value={String(projectId)}
+            onChange={(value) => {
+              if (value && value !== String(projectId)) {
+                navigate(`/projects/${value}`)
+              }
+            }}
+            items={projectList.map((p) => ({ value: String(p.id), label: p.name }))}
+            className="w-64"
+          />
+        </div>
+      )}
+
       <Card>
         <CardHeader className="flex-row items-start justify-between space-y-0 gap-2">
           <div className="min-w-0">
@@ -314,7 +330,22 @@ export default function ProjectDashboardPage() {
         </div>
       )}
 
-      <ProjectBoard projectId={projectId} />
+      <Tabs defaultValue="board">
+        <TabsList>
+          <TabsTrigger value="board">任务看板</TabsTrigger>
+          <TabsTrigger value="library">文献库</TabsTrigger>
+          <TabsTrigger value="reports">汇报中心</TabsTrigger>
+        </TabsList>
+        <TabsContent value="board" className="pt-4">
+          <ProjectBoard projectId={projectId} />
+        </TabsContent>
+        <TabsContent value="library" className="pt-4">
+          <DocumentLibraryTab projectId={projectId} />
+        </TabsContent>
+        <TabsContent value="reports" className="pt-4">
+          <ReportCenterTab projectId={projectId} />
+        </TabsContent>
+      </Tabs>
 
       <EditProjectSheet
         open={editOpen}

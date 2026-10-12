@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.database import init_db
-from app.routers import home, projects, tasks
+from app.routers import ai, documents, home, projects, report, reports, tasks
 
 
 @asynccontextmanager
@@ -60,6 +60,10 @@ app.add_middleware(
 app.include_router(projects.router, prefix="/api")
 app.include_router(tasks.router, prefix="/api")
 app.include_router(home.router, prefix="/api")
+app.include_router(ai.router, prefix="/api")
+app.include_router(report.router, prefix="/api")
+app.include_router(documents.router, prefix="/api")
+app.include_router(reports.router, prefix="/api")
 
 
 @app.exception_handler(RequestValidationError)

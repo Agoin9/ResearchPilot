@@ -410,3 +410,251 @@ class HomeOut(CamelModel):
     risk_tasks: list[RiskTaskItem]
     trend: list[TrendPoint]
     distribution: list[StatusSlice]
+
+
+# ═══════════════════════ AI 科研计划（DeepSeek） ═══════════════════════════
+
+class AiPlanRequest(CamelModel):
+    """生成科研计划的输入：研究主题 / 截止日期 / 每周小时 / 当前阶段 / 已完成工作。"""
+
+    topic: str
+    deadline: date
+    weekly_hours: float = Field(allow_inf_nan=False)
+    current_stage: str
+    completed_work: str | None = None
+
+    @field_validator("topic")
+    @classmethod
+    def check_topic(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("研究主题不能为空")
+        if len(v) > 2000:
+            raise ValueError("研究主题不能超过 2000 个字符")
+        return v
+
+    @field_validator("deadline")
+    @classmethod
+    def check_deadline(cls, v: date) -> date:
+        if v < date.today():
+            raise ValueError("截止日期不能早于今天")
+        return v
+
+    @field_validator("weekly_hours")
+    @classmethod
+    def check_weekly_hours(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("每周可用小时数必须大于 0")
+        if v > 168:
+            raise ValueError("每周可用小时数不能超过 168（一周最多 168 小时）")
+        return v
+
+    @field_validator("current_stage")
+    @classmethod
+    def check_stage(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("当前研究阶段不能为空")
+        if len(v) > 100:
+            raise ValueError("当前研究阶段不能超过 100 个字符")
+        return v
+
+    @field_validator("completed_work")
+    @classmethod
+    def check_completed(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        v = v.strip()
+        if len(v) > 2000:
+            raise ValueError("已完成工作不能超过 2000 个字符")
+        return v
+
+
+class AiPlanTask(CamelModel):
+    """计划中的单个任务（与前端约定的 JSON 结构，priority 为 高/中/低）。"""
+
+    task_id: str
+    title: str
+    description: str = ""
+    start_date: date
+    due_date: date
+    priority: str = "中"
+    expected_deliverable: str = ""
+    dependencies: list[str] = []
+    estimated_hours: float
+    rationale: str = ""
+
+
+class AiPlanOut(CamelModel):
+    """生成计划的响应：source=deepseek 真实生成 / demo 演示模式。"""
+
+    source: str
+    tasks: list[AiPlanTask]
+    warning: str = ""
+
+
+class AiPlanConfirmRequest(CamelModel):
+    """确认计划：用户点「确认」时才写入数据库（项目 + 任务一起创建）。"""
+
+    project: ProjectCreate
+    tasks: list[AiPlanTask]
+
+
+class AiPlanConfirmOut(CamelModel):
+    project: ProjectSummary
+    tasks: list[TaskOut]
+
+
+# ═══════════════════════ 周报生成 ═══════════════════════
+
+class WeeklyCompletedTask(CamelModel):
+    id: int
+    title: str
+    completed_at: datetime
+
+
+class WeeklyProgressItem(CamelModel):
+    task_title: str
+    progress: int
+    hours_spent: float | None
+    note: str | None
+    created_at: datetime
+
+
+class WeeklyProjectReport(CamelModel):
+    project_id: int
+    project_name: str
+    completed_tasks: list[WeeklyCompletedTask]
+    progress_records: list[WeeklyProgressItem]
+
+
+class WeeklyStats(CamelModel):
+    tasks_completed: int
+    hours_spent: float
+    progress_updates: int
+
+
+class WeeklyReportOut(CamelModel):
+    """近 7 天科研活动聚合（不依赖 AI，随时可用）。"""
+
+    week_start: date
+    week_end: date
+    stats: WeeklyStats
+    projects: list[WeeklyProjectReport]
+
+
+class AiWeeklyReportOut(CamelModel):
+    """AI 生成的周报正文（source=deepseek / demo）。"""
+
+    source: str
+    content: str
+
+
+# ═══════════════════════ 文献库（精读与引用溯源） ═══════════════════════
+
+class DocumentOut(CamelModel):
+    id: int
+    project_id: int
+    title: str
+    file_name: str
+    chunk_count: int
+    created_at: datetime
+
+
+class DocChunkOut(CamelModel):
+    id: int
+    chunk_index: int
+    content: str
+
+
+class DocumentDetailOut(DocumentOut):
+    full_text: str
+    chunks: list[DocChunkOut]
+
+
+class QaCreate(CamelModel):
+    """对文献提问。"""
+
+    question: str
+
+    @field_validator("question")
+    @classmethod
+    def check_question(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("问题不能为空")
+        if len(v) > 2000:
+            raise ValueError("问题不能超过 2000 个字符")
+        return v
+
+
+class CitationOut(CamelModel):
+    """引用片段：chunk_index 指向文献的切片序号，quote 为原文原句。"""
+
+    chunk_index: int
+    quote: str
+
+
+class QaOut(CamelModel):
+    id: int
+    document_id: int
+    project_id: int
+    question: str
+    answer: str
+    citations: list[CitationOut]
+    confidence: float
+    source: str  # deepseek / demo
+    is_saved: bool
+    created_at: datetime
+
+
+# ═══════════════════════ 组会周报与导师汇报 ═══════════════════════
+
+class ReportCreate(CamelModel):
+    """生成汇报：汇报类型 + 数据时间范围。"""
+
+    report_type: str = "meeting"
+    week_start: date | None = None
+    week_end: date | None = None
+
+    @field_validator("report_type")
+    @classmethod
+    def check_type(cls, v: str) -> str:
+        if v not in ("meeting", "supervisor"):
+            raise ValueError("汇报类型必须是 meeting（组会周报）/ supervisor（导师汇报）之一")
+        return v
+
+    @model_validator(mode="after")
+    def check_range(self):
+        if self.week_start and self.week_end and self.week_end < self.week_start:
+            raise ValueError("结束日期不能早于开始日期")
+        return self
+
+
+class ReportUpdate(CamelModel):
+    """编辑汇报正文。"""
+
+    content: str
+
+    @field_validator("content")
+    @classmethod
+    def check_content(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("汇报内容不能为空")
+        if len(v) > 50000:
+            raise ValueError("汇报内容不能超过 50000 个字符")
+        return v
+
+
+class ReportOut(CamelModel):
+    id: int
+    project_id: int
+    title: str
+    report_type: str
+    week_start: date | None
+    week_end: date | None
+    content: str
+    source: str  # deepseek / demo
+    created_at: datetime
+    updated_at: datetime

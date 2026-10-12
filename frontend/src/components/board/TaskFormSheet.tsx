@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { NativeSelect } from '@/components/ui/native-select'
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Slider } from '@/components/ui/slider'
 import { Textarea } from '@/components/ui/textarea'
@@ -147,16 +147,12 @@ export function TaskFormSheet({
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <Label>优先级</Label>
-              <Select
+              <NativeSelect
                 value={priority}
-                onValueChange={(value) => setPriority((value as TaskPriority) ?? 'medium')}
+                onChange={(value) => setPriority((value || 'medium') as TaskPriority)}
                 items={PRIORITY_ITEMS}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="选择优先级" />
-                </SelectTrigger>
-                <SelectContent />
-              </Select>
+                placeholder="选择优先级"
+              />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="task-hours">预计耗时（小时，可选）</Label>

@@ -6,7 +6,7 @@ import { EmptyState } from '@/components/common/EmptyState'
 import { ErrorState } from '@/components/common/ErrorState'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { NativeSelect } from '@/components/ui/native-select'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { fetchProjects } from '@/services/api'
 import type { ProjectStatus } from '@/types'
@@ -66,16 +66,13 @@ export default function BoardPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <KanbanSquare className="size-5 text-muted-foreground" />
-          <Select
+          <NativeSelect
             value={String(selectedId)}
-            onValueChange={(value) => value && setSelectedId(Number(value))}
+            onChange={(value) => value && setSelectedId(Number(value))}
             items={projects.map((p) => ({ value: String(p.id), label: p.name }))}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="选择项目" />
-            </SelectTrigger>
-            <SelectContent />
-          </Select>
+            placeholder="选择项目"
+            className="w-56"
+          />
           {selected && (
             <Badge variant="secondary">{STATUS_LABELS[selected.status]}</Badge>
           )}

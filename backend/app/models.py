@@ -125,3 +125,90 @@ class ReplanHistory(Base):
     decided_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     project: Mapped["Project"] = relationship(back_populates="replan_histories")
+
+
+class Document(Base):
+    """文献表：上传的 PDF（提取全文后按段切块存入 doc_chunk）。"""
+
+    __tablename__ = "document"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    project_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("project.id", ondelete="CASCADE"), nullable=False
+    )
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    file_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    full_text: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    chunk_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    project: Mapped["Project"] = relationship()
+    chunks: Mapped[list["DocChunk"]] = relationship(
+        back_populates="document", cascade="all, delete-orphan", passive_deletes=True
+    )
+    qas: Mapped[list["DocQa"]] = relationship(
+        back_populates="document", cascade="all, delete-orphan", passive_deletes=True
+    )
+
+
+class DocChunk(Base):
+    """文献切片表：每段约 500~800 字，问答检索的最小单元。"""
+
+    __tablename__ = "doc_chunk"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    document_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("document.id", ondelete="CASCADE"), nullable=False
+    )
+    chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)  # 从 1 开始
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    document: Mapped["Document"] = relationship(back_populates="chunks")
+
+
+class DocQa(Base):
+    """文献问答表：问题、答案、引用片段、置信度；is_saved 标记保存为笔记。"""
+
+    __tablename__ = "doc_qa"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    project_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("project.id", ondelete="CASCADE"), nullable=False
+    )
+    document_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("document.id", ondelete="CASCADE"), nullable=False
+    )
+    question: Mapped[str] = mapped_column(Text, nullable=False)
+    answer: Mapped[str] = mapped_column(Text, nullable=False)
+    citations_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    confidence: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    source: Mapped[str] = mapped_column(String(20), nullable=False, default="demo")  # deepseek/demo
+    is_saved: Mapped[bool] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    project: Mapped["Project"] = relationship()
+    document: Mapped["Document"] = relationship(back_populates="qas")
+
+
+class Report(Base):
+    """组会周报与导师汇报表：Markdown 内容，可编辑保存、导出。"""
+
+    __tablename__ = "reports"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    project_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("project.id", ondelete="CASCADE"), nullable=False
+    )
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    report_type: Mapped[str] = mapped_column(String(20), nullable=False, default="meeting")  # meeting/supervisor
+    week_start: Mapped[date | None] = mapped_column(Date, nullable=True)
+    week_end: Mapped[date | None] = mapped_column(Date, nullable=True)
+    content: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    source: Mapped[str] = mapped_column(String(20), nullable=False, default="demo")  # deepseek/demo
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.now, onupdate=datetime.now
+    )
+
+    project: Mapped["Project"] = relationship()

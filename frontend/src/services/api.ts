@@ -1,14 +1,24 @@
 import axios from 'axios'
 import { toast } from '@/components/ui/toast'
 import type {
+  AiPlanInput,
+  AiPlanResult,
+  AiPlanTask,
+  AiWeeklyReport,
+  DocumentDetail,
+  DocumentInfo,
   HomeData,
   ProgressRecord,
   Project,
   ProjectDetail,
   ProjectInput,
+  QaEntry,
+  ReportInfo,
+  ReportType,
   Task,
   TaskInput,
   TaskUpdateInput,
+  WeeklyReport,
 } from '@/types'
 
 /**
@@ -128,4 +138,102 @@ export function addTaskProgress(
 /** 进度记录列表（时间升序） */
 export function fetchTaskProgress(id: number): Promise<ProgressRecord[]> {
   return client.get(`/tasks/${id}/progress`)
+}
+
+/** 生成 AI 科研计划（只返回预览草稿，不写数据库） */
+export function generateAiPlan(data: AiPlanInput): Promise<AiPlanResult> {
+  return client.post('/ai/plan', data)
+}
+
+/** 确认 AI 计划：创建项目 + 批量写入任务 */
+export function confirmAiPlan(data: {
+  project: ProjectInput
+  tasks: AiPlanTask[]
+}): Promise<{ project: Project; tasks: Task[] }> {
+  return client.post('/ai/plan/confirm', data)
+}
+
+/** 近 7 天科研活动聚合（周报数据源） */
+export function fetchWeeklyReport(): Promise<WeeklyReport> {
+  return client.get('/report/weekly')
+}
+
+/** 生成 AI 周报正文（无 Key 时返回模板周报） */
+export function generateWeeklyReport(): Promise<AiWeeklyReport> {
+  return client.post('/report/weekly/generate')
+}
+
+/** 上传 PDF 文献（FormData，axios 自动设置 multipart 边界） */
+export function uploadDocument(
+  projectId: number,
+  file: File,
+  title?: string
+): Promise<DocumentInfo> {
+  const form = new FormData()
+  form.append('file', file)
+  if (title) form.append('title', title)
+  return client.post(`/projects/${projectId}/documents`, form)
+}
+
+/** 项目下的文献列表 */
+export function fetchDocuments(projectId: number): Promise<DocumentInfo[]> {
+  return client.get(`/projects/${projectId}/documents`)
+}
+
+/** 文献详情（含全文切片，用于"点击来源看原文"） */
+export function fetchDocumentDetail(id: number): Promise<DocumentDetail> {
+  return client.get(`/documents/${id}`)
+}
+
+/** 删除文献（级联删除切片与问答） */
+export function deleteDocument(id: number): Promise<void> {
+  return client.delete(`/documents/${id}`)
+}
+
+/** 对文献提问：后端关键词检索 + DeepSeek 只依据片段回答 */
+export function askDocument(id: number, question: string): Promise<QaEntry> {
+  return client.post(`/documents/${id}/qa`, { question })
+}
+
+/** 文献的问答历史 */
+export function fetchDocumentQa(id: number): Promise<QaEntry[]> {
+  return client.get(`/documents/${id}/qa`)
+}
+
+/** 把问答结果保存为笔记 */
+export function saveQaNote(id: number): Promise<QaEntry> {
+  return client.post(`/qa/${id}/save-note`)
+}
+
+/** 项目下已保存的笔记 */
+export function fetchProjectNotes(projectId: number): Promise<QaEntry[]> {
+  return client.get(`/projects/${projectId}/notes`)
+}
+
+/** 生成组会周报/导师汇报（后端聚合数据 + DeepSeek，落库并返回） */
+export function generateMeetingReport(
+  projectId: number,
+  data: { reportType: ReportType; weekStart: string; weekEnd: string }
+): Promise<ReportInfo> {
+  return client.post(`/projects/${projectId}/reports`, data)
+}
+
+/** 项目汇报历史（最新在前） */
+export function fetchMeetingReports(projectId: number): Promise<ReportInfo[]> {
+  return client.get(`/projects/${projectId}/reports`)
+}
+
+/** 汇报详情 */
+export function fetchReportDetail(id: number): Promise<ReportInfo> {
+  return client.get(`/reports/${id}`)
+}
+
+/** 编辑后保存汇报正文 */
+export function updateReportContent(id: number, content: string): Promise<ReportInfo> {
+  return client.put(`/reports/${id}`, { content })
+}
+
+/** 导出 Markdown 的下载地址（同源，交给 <a download> 触发下载） */
+export function reportExportUrl(id: number): string {
+  return `${client.defaults.baseURL}/reports/${id}/export`
 }
