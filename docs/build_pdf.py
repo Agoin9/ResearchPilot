@@ -2,7 +2,7 @@
 """ResearchPilot 文档导出：Markdown → HTML → PDF（Edge 无头打印）。
 
 用法：
-    python build_pdf.py            # 默认导出 ResearchPilot-项目文档.md → .pdf
+    python build_pdf.py            # 默认导出 ResearchPilot2.0-项目文档.md → .pdf
     python build_pdf.py 输入.md 输出.pdf
 
 依赖：markdown（pip install markdown）；PDF 由本机 Edge 无头模式打印（需 Windows 自带 Edge）。
@@ -117,7 +117,7 @@ def verify(pdf_path: Path) -> None:
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    md_file = Path(args[0]) if len(args) > 0 else Path(__file__).parent / "ResearchPilot-项目文档.md"
+    md_file = Path(args[0]) if len(args) > 0 else Path(__file__).parent / "ResearchPilot2.0-项目文档.md"
     pdf_file = Path(args[1]) if len(args) > 1 else md_file.with_suffix(".pdf")
     convert(md_file, pdf_file)
     verify(pdf_file)

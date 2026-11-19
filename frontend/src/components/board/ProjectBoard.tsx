@@ -19,8 +19,14 @@ import { Progress } from '@/components/ui/progress'
 import { toast } from '@/components/ui/toast'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { deleteTask, fetchProjectDetail, updateTask } from '@/services/api'
-import type { Task, TaskPriority, TaskStatus } from '@/types'
+import type { Task, TaskPriority, TaskSourceType, TaskStatus } from '@/types'
 import { TaskFormSheet } from './TaskFormSheet'
+
+const SOURCE_LABELS: Partial<Record<TaskSourceType, string>> = {
+  question: '来源·研究问题',
+  literature_card: '来源·文献卡片',
+  experiment_analysis: '来源·实验分析',
+}
 
 const COLUMNS: Array<{ status: TaskStatus; title: string }> = [
   { status: 'todo', title: '待开始' },
@@ -109,6 +115,11 @@ function TaskCard({ task, onEdit, onChanged }: TaskCardProps) {
           <Badge variant="secondary">
             <Milestone className="size-3" />
             里程碑
+          </Badge>
+        )}
+        {task.sourceType && SOURCE_LABELS[task.sourceType] && (
+          <Badge variant="outline" className="border-primary/40 text-primary">
+            {SOURCE_LABELS[task.sourceType]}
           </Badge>
         )}
         {task.estimatedHours != null && (

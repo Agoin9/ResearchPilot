@@ -12,7 +12,16 @@ from sqlalchemy.orm import Session
 
 from app.ai_client import DeepSeekClient, DeepSeekError
 from app.config import DEEPSEEK_API_KEY
-from app.models import ProgressRecord, Project, ReplanHistory, Task
+from app.models import (
+    Experiment,
+    ExperimentAnalysis,
+    ExperimentRun,
+    LiteratureCard,
+    ProgressRecord,
+    Project,
+    ReplanHistory,
+    Task,
+)
 from app.services.risk import (
     RISK_HIGH,
     RISK_MEDIUM,
@@ -91,6 +100,32 @@ def collect_project_data(
         }
 
     project_risk, _ = compute_project_risk(project, tasks, today)
+
+    # ── v2：实验与文献证据摘要（科研内容维度，任务数据之外的真实科研进展） ──
+    experiments = list(
+        db.scalars(select(Experiment).where(Experiment.project_id == project.id))
+    )
+    experiment_runs = db.scalars(
+        select(ExperimentRun)
+        .where(ExperimentRun.experiment_id.in_([e.id for e in experiments] or [0]))
+        .order_by(ExperimentRun.created_at)
+    ).all()
+    runs_in_range = [
+        r for r in experiment_runs if week_start <= r.created_at.date() <= week_end
+    ]
+    latest_analyses = db.scalars(
+        select(ExperimentAnalysis)
+        .where(ExperimentAnalysis.experiment_id.in_([e.id for e in experiments] or [0]))
+        .order_by(ExperimentAnalysis.created_at.desc())
+        .limit(3)
+    ).all()
+    cards = db.scalars(
+        select(LiteratureCard).where(LiteratureCard.project_id == project.id)
+    ).all()
+    cards_in_range = [
+        c for c in cards if week_start <= c.created_at.date() <= week_end
+    ]
+
     return {
         "project": {
             "name": project.name,
@@ -140,6 +175,42 @@ def collect_project_data(
             }
             for r in replans
         ],
+        # v2 科研内容维度（实验与证据）
+        "experiments": [
+            {
+                "title": e.title,
+                "status": e.status,
+                "runs_total": sum(1 for r in experiment_runs if r.experiment_id == e.id),
+                "runs_in_range": sum(
+                    1 for r in runs_in_range if r.experiment_id == e.id
+                ),
+            }
+            for e in experiments
+        ],
+        "runs_in_range": [
+            {
+                "experiment_title": next(
+                    (e.title for e in experiments if e.id == r.experiment_id), f"实验#{r.experiment_id}"
+                ),
+                "run_no": r.run_no,
+                "results": (r.results_json or "{}")[:200],
+                "notes": (r.notes or "")[:200],
+                "created_at": r.created_at.date().isoformat(),
+            }
+            for r in runs_in_range
+        ],
+        "latest_analyses": [
+            {
+                "content": (a.content or "")[:300],
+                "source": a.source,
+                "created_at": a.created_at.date().isoformat(),
+            }
+            for a in latest_analyses
+        ],
+        "evidence": {
+            "cards_total": len(cards),
+            "cards_in_range": len(cards_in_range),
+        },
     }
 
 
@@ -159,8 +230,11 @@ def build_messages(data: dict, report_type: str) -> list[dict]:
         "3. 未完成及原因要结合任务的 risk_reason 和进度记录的 note 分析；\n"
         "4. 需要导师支持一节根据当前风险与未完成任务推断（如：需导师帮忙协调资源、"
         "审阅方案、提供数据等），没有需要就写「无」；\n"
-        f"5. 风格：{style}；\n"
-        "6. 只输出 Markdown 正文，不要输出任何解释性文字。"
+        "5. 数据中的 experiments / runs_in_range / latest_analyses / evidence 是科研内容"
+        "维度的真实进展（实验运行、AI 分析结论、文献证据卡片），请自然融入「本周完成」"
+        "一节（如：本周完成 N 次实验运行，最新分析结论为……），没有则忽略；\n"
+        f"6. 风格：{style}；\n"
+        "7. 只输出 Markdown 正文，不要输出任何解释性文字。"
     )
     user = f"项目数据（JSON）：\n{json.dumps(data, ensure_ascii=False, indent=2)}"
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]
@@ -174,10 +248,19 @@ def build_demo_report(data: dict, report_type: str) -> str:
     lines = [f"# {label}（{week['start']} ~ {week['end']}）", "", f"项目：{project['name']}", ""]
 
     lines.append("## 本周完成")
+    has_done = bool(data["completed_tasks"]) or bool(data.get("runs_in_range"))
     if data["completed_tasks"]:
         for t in data["completed_tasks"]:
             lines.append(f"- {t['title']}")
-    else:
+    if data.get("runs_in_range"):
+        for r in data["runs_in_range"]:
+            lines.append(
+                f"- 实验「{r['experiment_title']}」完成第 {r['run_no']} 次运行"
+                + (f"：{r['notes']}" if r["notes"] else "")
+            )
+    if data.get("evidence") and data["evidence"].get("cards_in_range"):
+        lines.append(f"- 新增 {data['evidence']['cards_in_range']} 张文献研究卡片")
+    if not has_done:
         lines.append("无")
     lines.append("")
 

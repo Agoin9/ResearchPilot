@@ -1,17 +1,28 @@
 import { NavLink } from 'react-router-dom'
 import {
   BarChart3,
+  BookOpenCheck,
+  ClipboardList,
   FilePlus2,
   FileText,
   FlaskConical,
+  Gauge,
   KanbanSquare,
   LayoutDashboard,
+  Scale,
 } from 'lucide-react'
 import { cn } from 'cn'
 import { useEffect, useState } from 'react'
 import { fetchProjects } from '@/services/api'
 
-/** 左侧导航栏：Logo + 五个页面入口 */
+interface NavItem {
+  to: string
+  label: string
+  icon: typeof LayoutDashboard
+  end?: boolean
+}
+
+/** 左侧导航栏：Logo + 总览 / 科研工作台 / 项目管理 三组入口 */
 export function Sidebar() {
   // 「项目仪表盘」指向最新一个项目；没有项目时引导去新建
   const [firstProjectId, setFirstProjectId] = useState<number | null>(null)
@@ -24,17 +35,46 @@ export function Sidebar() {
       .catch(() => setFirstProjectId(null))
   }, [])
 
-  const navItems = [
+  const overviewItems: NavItem[] = [
     { to: '/', label: '首页', icon: LayoutDashboard, end: true },
+    { to: '/cockpit', label: '科研驾驶舱', icon: Gauge },
+    { to: '/report', label: '周报生成', icon: FileText },
     { to: '/projects/new', label: '新建项目', icon: FilePlus2 },
+  ]
+
+  const workbenchItems: NavItem[] = [
+    { to: '/library', label: '文献研究库', icon: BookOpenCheck },
+    { to: '/lab', label: '实验工作台', icon: FlaskConical },
+    { to: '/compare', label: '结果比较', icon: Scale },
+    { to: '/decisions', label: '决策日志', icon: ClipboardList },
+  ]
+
+  const manageItems: NavItem[] = [
     { to: '/board', label: '任务看板', icon: KanbanSquare },
     {
       to: firstProjectId !== null ? `/projects/${firstProjectId}` : '/projects/new',
       label: '项目仪表盘',
       icon: BarChart3,
     },
-    { to: '/report', label: '周报生成', icon: FileText },
   ]
+
+  const renderItems = (items: NavItem[]) =>
+    items.map((item) => (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        end={item.end}
+        className={({ isActive }) =>
+          cn(
+            'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
+            isActive && 'bg-primary/10 text-primary hover:bg-primary/15'
+          )
+        }
+      >
+        <item.icon className="size-4" />
+        {item.label}
+      </NavLink>
+    ))
 
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-border bg-card">
@@ -50,23 +90,16 @@ export function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1 px-3 pt-2">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
-                isActive && 'bg-primary/10 text-primary hover:bg-primary/15'
-              )
-            }
-          >
-            <item.icon className="size-4" />
-            {item.label}
-          </NavLink>
-        ))}
+      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 pt-2">
+        {renderItems(overviewItems)}
+        <p className="mt-4 mb-1 px-3 text-[11px] font-medium tracking-wide text-muted-foreground/70">
+          科研工作台
+        </p>
+        {renderItems(workbenchItems)}
+        <p className="mt-4 mb-1 px-3 text-[11px] font-medium tracking-wide text-muted-foreground/70">
+          项目管理
+        </p>
+        {renderItems(manageItems)}
       </nav>
 
       <div className="border-t border-border px-5 py-4">

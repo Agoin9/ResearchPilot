@@ -112,6 +112,10 @@ def adopt_replan(replan_id: int, db: Session = Depends(get_db)):
         task = db.get(Task, item.get("task_id"))
         if task is None or task.project_id != replan.project_id:
             continue
+        # 边界守卫：重规划只调整任务执行安排（日期/优先级/工时）。
+        # 科研假设与实验结果存于 Experiment/ExperimentRun 表，
+        # 本循环只写 task 表字段，结构上不可能触碰科研结论；
+        # 非法 action 在生成侧（validate_changes）已被丢弃，此处再兜底忽略。
         action = item.get("action")
         if action == "reschedule":
             if item.get("planned_start_date"):

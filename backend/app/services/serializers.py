@@ -1,4 +1,5 @@
 """ORM 对象 → 响应模型 的序列化助手（附带实时计算的进度 / 风险字段）。"""
+import json
 from datetime import date
 
 from app.models import Project, Task
@@ -25,6 +26,11 @@ def build_task_out(task: Task, today: date | None = None) -> TaskOut:
         progress=task.progress,
         is_milestone=bool(task.is_milestone),
         sort_order=task.sort_order,
+        source_type=task.source_type,
+        source_id=task.source_id,
+        experiment_id=task.experiment_id,
+        question_id=task.question_id,
+        dependencies=json.loads(task.dependencies_json or "[]"),
         created_at=task.created_at,
         updated_at=task.updated_at,
         risk=risk,

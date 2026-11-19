@@ -5,17 +5,37 @@ import type {
   AiPlanResult,
   AiPlanTask,
   AiWeeklyReport,
+  CardCompareResult,
+  CardExtractResult,
   DocumentDetail,
   DocumentInfo,
+  EvidenceType,
+  Experiment,
+  ExperimentAnalysis,
+  ExperimentCompare,
+  ExperimentDetail,
+  ExperimentRun,
+  ExperimentStatus,
   HomeData,
+  LiteratureCard,
+  MetricDef,
+  MetricsOverview,
+  NextExperiment,
   ProgressRecord,
   Project,
   ProjectDetail,
   ProjectInput,
   QaEntry,
+  Question,
+  QuestionStatus,
   ReplanInfo,
   ReportInfo,
   ReportType,
+  ResearchActionLog,
+  ResearchAnalysis,
+  ResearchDecision,
+  SuggestionAdoptInput,
+  SuggestionAdoptResult,
   Task,
   TaskInput,
   TaskUpdateInput,
@@ -259,4 +279,306 @@ export function rejectReplan(id: number): Promise<ReplanInfo> {
 /** 重规划历史记录 */
 export function fetchReplans(projectId: number): Promise<ReplanInfo[]> {
   return client.get(`/projects/${projectId}/replans`)
+}
+
+// ═══════════════════════════ v2：科研工作台 ═══════════════════════════
+
+/** 项目下的研究问题列表（含证据计数） */
+export function fetchQuestions(projectId: number): Promise<Question[]> {
+  return client.get(`/projects/${projectId}/questions`)
+}
+
+/** 创建研究问题 */
+export function createQuestion(
+  projectId: number,
+  data: { content: string; status?: QuestionStatus }
+): Promise<Question> {
+  return client.post(`/projects/${projectId}/questions`, data)
+}
+
+/** 更新研究问题（内容/状态/解答摘要） */
+export function updateQuestion(
+  id: number,
+  data: Partial<{ content: string; status: QuestionStatus; answerSummary: string | null }>
+): Promise<Question> {
+  return client.put(`/questions/${id}`, data)
+}
+
+/** 删除研究问题 */
+export function deleteQuestion(id: number): Promise<void> {
+  return client.delete(`/questions/${id}`)
+}
+
+/** 项目下的文献卡片列表（可按问题/立场筛选） */
+export function fetchCards(
+  projectId: number,
+  params?: { questionId?: number; evidenceType?: EvidenceType }
+): Promise<LiteratureCard[]> {
+  return client.get(`/projects/${projectId}/cards`, { params })
+}
+
+/** 手工创建研究卡片 */
+export function createCard(
+  projectId: number,
+  data: Partial<LiteratureCard> & { documentId?: number | null; questionId?: number | null }
+): Promise<LiteratureCard> {
+  return client.post(`/projects/${projectId}/cards`, data)
+}
+
+/** 对文献 AI 抽取研究卡片（无 Key 时返回空模板） */
+export function extractDocumentCard(documentId: number): Promise<CardExtractResult> {
+  return client.post(`/documents/${documentId}/card`)
+}
+
+/** 该文献的卡片 */
+export function fetchDocumentCard(documentId: number): Promise<LiteratureCard> {
+  return client.get(`/documents/${documentId}/card`)
+}
+
+/** 修改卡片字段（source 自动置 manual） */
+export function updateCard(
+  id: number,
+  data: Partial<LiteratureCard>
+): Promise<LiteratureCard> {
+  return client.put(`/cards/${id}`, data)
+}
+
+/** 删除卡片 */
+export function deleteCard(id: number): Promise<void> {
+  return client.delete(`/cards/${id}`)
+}
+
+/** 多卡片字段级对比 */
+export function compareCards(projectId: number, cardIds: number[]): Promise<CardCompareResult> {
+  return client.get(`/projects/${projectId}/cards/compare`, {
+    params: { card_ids: cardIds.join(',') },
+  })
+}
+
+/** 项目下的实验列表 */
+export function fetchExperiments(projectId: number): Promise<Experiment[]> {
+  return client.get(`/projects/${projectId}/experiments`)
+}
+
+/** 创建实验 */
+export function createExperiment(
+  projectId: number,
+  data: {
+    questionId?: number | null
+    title: string
+    objective: string
+    hypothesis?: string | null
+    design?: string | null
+    metrics?: MetricDef[]
+    status?: ExperimentStatus
+  }
+): Promise<Experiment> {
+  return client.post(`/projects/${projectId}/experiments`, data)
+}
+
+/** 更新实验 */
+export function updateExperiment(
+  id: number,
+  data: Partial<Experiment> & { metrics?: MetricDef[] }
+): Promise<Experiment> {
+  return client.put(`/experiments/${id}`, data)
+}
+
+/** 删除实验 */
+export function deleteExperiment(id: number): Promise<void> {
+  return client.delete(`/experiments/${id}`)
+}
+
+/** 实验详情（含全部运行记录） */
+export function fetchExperimentDetail(id: number): Promise<ExperimentDetail> {
+  return client.get(`/experiments/${id}`)
+}
+
+/** 新增运行记录 */
+export function createRun(
+  experimentId: number,
+  data: {
+    config?: Record<string, unknown>
+    results?: Record<string, unknown>
+    notes?: string | null
+    startedAt?: string | null
+    finishedAt?: string | null
+  }
+): Promise<ExperimentRun> {
+  return client.post(`/experiments/${experimentId}/runs`, data)
+}
+
+/** 修改运行记录 */
+export function updateRun(
+  id: number,
+  data: Partial<{
+    config: Record<string, unknown>
+    results: Record<string, unknown>
+    notes: string | null
+    startedAt: string | null
+    finishedAt: string | null
+  }>
+): Promise<ExperimentRun> {
+  return client.put(`/runs/${id}`, data)
+}
+
+/** 删除运行记录 */
+export function deleteRun(id: number): Promise<void> {
+  return client.delete(`/runs/${id}`)
+}
+
+/** 上传运行记录附件图片 */
+export function uploadRunAttachment(id: number, file: File): Promise<ExperimentRun> {
+  const form = new FormData()
+  form.append('file', file)
+  return client.post(`/runs/${id}/attachments`, form)
+}
+
+/** 同实验 run 对比（指标对齐） */
+export function fetchExperimentCompare(id: number): Promise<ExperimentCompare> {
+  return client.get(`/experiments/${id}/compare`)
+}
+
+/** 跨实验指标总览 */
+export function fetchMetricsOverview(projectId: number): Promise<MetricsOverview> {
+  return client.get(`/projects/${projectId}/metrics`)
+}
+
+/** 基于真实运行记录生成 AI 分析（无记录/无 Key 时后端返回 400） */
+export function generateAnalysis(experimentId: number): Promise<ExperimentAnalysis> {
+  return client.post(`/experiments/${experimentId}/analysis`)
+}
+
+/** 手工分析笔记（无 Key 时的人工替代） */
+export function createAnalysisNote(
+  experimentId: number,
+  content: string
+): Promise<ExperimentAnalysis> {
+  return client.post(`/experiments/${experimentId}/analysis/notes`, { content })
+}
+
+/** 实验的分析历史 */
+export function fetchAnalyses(experimentId: number): Promise<ExperimentAnalysis[]> {
+  return client.get(`/experiments/${experimentId}/analyses`)
+}
+
+/** 编辑分析正文 */
+export function updateAnalysisContent(id: number, content: string): Promise<ExperimentAnalysis> {
+  return client.put(`/analyses/${id}`, { content })
+}
+
+/** 分析建议 → 转为科研任务（带来源标记） */
+export function suggestionToTask(analysisId: number, suggestionIndex: number): Promise<Task> {
+  return client.post(`/analyses/${analysisId}/suggestions/${suggestionIndex}/to-task`)
+}
+
+/** 分析建议 → 转为实验草稿 */
+export function suggestionToExperiment(
+  analysisId: number,
+  suggestionIndex: number
+): Promise<Experiment> {
+  return client.post(`/analyses/${analysisId}/suggestions/${suggestionIndex}/to-experiment`)
+}
+
+/** 实验附件图片的访问地址 */
+export function attachmentUrl(fileName: string): string {
+  return `${client.defaults.baseURL}/uploads/${fileName}`
+}
+
+// ═══════════════════════════ v2.1：科研决策记录 ═══════════════════════════
+
+/** 实验的决策记录列表 */
+export function fetchExperimentDecisions(experimentId: number): Promise<ResearchDecision[]> {
+  return client.get(`/experiments/${experimentId}/decisions`)
+}
+
+/** 项目下全部决策记录 */
+export function fetchProjectDecisions(projectId: number): Promise<ResearchDecision[]> {
+  return client.get(`/projects/${projectId}/decisions`)
+}
+
+/** 创建科研决策（内容全部来自研究者本人） */
+export function createDecision(
+  experimentId: number,
+  data: {
+    runIds: number[]
+    observations: string
+    interpretation?: string | null
+    supportsHypothesis?: boolean | null
+    unknowns?: string | null
+    nextSuggestions?: string[]
+  }
+): Promise<ResearchDecision> {
+  return client.post(`/experiments/${experimentId}/decisions`, data)
+}
+
+/** 更新科研决策 */
+export function updateDecision(
+  id: number,
+  data: Partial<{
+    runIds: number[]
+    observations: string
+    interpretation: string | null
+    supportsHypothesis: boolean | null
+    unknowns: string | null
+    nextSuggestions: string[]
+  }>
+): Promise<ResearchDecision> {
+  return client.put(`/decisions/${id}`, data)
+}
+
+/** 删除科研决策 */
+export function deleteDecision(id: number): Promise<void> {
+  return client.delete(`/decisions/${id}`)
+}
+
+// ═══════════════════════════ v2.2/2.3：AI 研究分析 ═══════════════════════════
+
+/** 按研究问题生成七段式 AI 研究分析（无 Key 时演示模式） */
+export function generateQuestionAnalysis(questionId: number): Promise<ResearchAnalysis> {
+  return client.post(`/questions/${questionId}/analysis`)
+}
+
+/** 研究问题的分析历史 */
+export function fetchQuestionAnalyses(questionId: number): Promise<ResearchAnalysis[]> {
+  return client.get(`/questions/${questionId}/analyses`)
+}
+
+/** 分析详情 */
+export function fetchResearchAnalysis(id: number): Promise<ResearchAnalysis> {
+  return client.get(`/research-analyses/${id}`)
+}
+
+/** 采纳建议（可修改后提交）→ 创建实验 + 关联任务 */
+export function adoptSuggestion(
+  analysisId: number,
+  index: number,
+  data: SuggestionAdoptInput
+): Promise<SuggestionAdoptResult> {
+  return client.post(`/research-analyses/${analysisId}/suggestions/${index}/adopt`, data)
+}
+
+/** 拒绝建议（可选原因） */
+export function rejectSuggestion(
+  analysisId: number,
+  index: number,
+  reason?: string
+): Promise<ResearchActionLog> {
+  return client.post(`/research-analyses/${analysisId}/suggestions/${index}/reject`, {
+    reason: reason || null,
+  })
+}
+
+/** 修改建议（不采纳） */
+export function modifySuggestion(
+  analysisId: number,
+  index: number,
+  data: Partial<NextExperiment>
+): Promise<NextExperiment> {
+  return client.put(`/research-analyses/${analysisId}/suggestions/${index}`, data)
+}
+
+/** 分析的采纳/拒绝/修改历史 */
+export function fetchAnalysisActions(analysisId: number): Promise<ResearchActionLog[]> {
+  return client.get(`/research-analyses/${analysisId}/actions`)
 }

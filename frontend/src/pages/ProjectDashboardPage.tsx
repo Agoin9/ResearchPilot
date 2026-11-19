@@ -12,6 +12,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ProjectBoard } from '@/components/board/ProjectBoard'
 import { ErrorState } from '@/components/common/ErrorState'
 import { DocumentLibraryTab } from '@/components/documents/DocumentLibraryTab'
+import { ExperimentsTab } from '@/components/experiments/ExperimentsTab'
+import { QuestionsTab } from '@/components/questions/QuestionsTab'
 import { ReplanTab } from '@/components/replan/ReplanTab'
 import { ReportCenterTab } from '@/components/reports/ReportCenterTab'
 import { Badge } from '@/components/ui/badge'
@@ -334,15 +336,23 @@ export default function ProjectDashboardPage() {
       <Tabs defaultValue="board">
         <TabsList>
           <TabsTrigger value="board">任务看板</TabsTrigger>
+          <TabsTrigger value="questions">研究问题</TabsTrigger>
           <TabsTrigger value="library">文献库</TabsTrigger>
+          <TabsTrigger value="experiments">实验</TabsTrigger>
           <TabsTrigger value="reports">汇报中心</TabsTrigger>
           <TabsTrigger value="replan">重规划</TabsTrigger>
         </TabsList>
         <TabsContent value="board" className="pt-4">
           <ProjectBoard projectId={projectId} />
         </TabsContent>
+        <TabsContent value="questions" className="pt-4">
+          <QuestionsTab projectId={projectId} />
+        </TabsContent>
         <TabsContent value="library" className="pt-4">
           <DocumentLibraryTab projectId={projectId} />
+        </TabsContent>
+        <TabsContent value="experiments" className="pt-4">
+          <ExperimentsTab projectId={projectId} />
         </TabsContent>
         <TabsContent value="reports" className="pt-4">
           <ReportCenterTab projectId={projectId} />

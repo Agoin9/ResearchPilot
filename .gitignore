@@ -8,3 +8,5 @@ node_modules/
 dist/
 # sqlite数据库文件（可选，开发库可以保留，提交时注意）
 *.db
+# v2 迁移备份
+*.db.bak*

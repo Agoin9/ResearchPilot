@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.ai_client import DeepSeekClient
 from app.config import DEEPSEEK_API_KEY
-from app.models import ProgressRecord, Project, Task
+from app.models import ExperimentRun, ProgressRecord, Project, Task
 from app.schemas import (
     WeeklyCompletedTask,
     WeeklyProgressItem,
@@ -26,6 +26,7 @@ def get_weekly_report(db: Session, today: date | None = None) -> WeeklyReportOut
     projects = db.scalars(select(Project).order_by(Project.id)).all()
     tasks = db.scalars(select(Task)).all()
     records = db.scalars(select(ProgressRecord).order_by(ProgressRecord.created_at)).all()
+    runs = db.scalars(select(ExperimentRun).order_by(ExperimentRun.created_at)).all()
 
     done_by_id = {
         t.id: t
@@ -33,6 +34,7 @@ def get_weekly_report(db: Session, today: date | None = None) -> WeeklyReportOut
         if t.status == "done" and t.updated_at and week_start <= t.updated_at.date() <= today
     }
     records_in_week = [r for r in records if week_start <= r.created_at.date() <= today]
+    runs_in_week = [r for r in runs if week_start <= r.created_at.date() <= today]
 
     project_reports: list[WeeklyProjectReport] = []
     for project in projects:
@@ -71,6 +73,7 @@ def get_weekly_report(db: Session, today: date | None = None) -> WeeklyReportOut
             tasks_completed=len(done_by_id),
             hours_spent=round(sum(r.hours_spent or 0 for r in records_in_week), 1),
             progress_updates=len(records_in_week),
+            experiment_runs=len(runs_in_week),
         ),
         projects=project_reports,
     )
@@ -95,6 +98,7 @@ def build_report_messages(weekly: WeeklyReportOut) -> list[dict]:
         f"本周完成任务数：{weekly.stats.tasks_completed}",
         f"本周投入小时数：{weekly.stats.hours_spent}",
         f"本周进度更新次数：{weekly.stats.progress_updates}",
+        f"本周实验运行次数：{weekly.stats.experiment_runs}",
         "",
         "各项目明细：",
     ]
@@ -130,7 +134,7 @@ def build_demo_report(weekly: WeeklyReportOut) -> str:
         "",
         "## 本周工作概述",
         f"本周共完成 {stats.tasks_completed} 个任务，进行了 {stats.progress_updates} 次进度更新，"
-        f"累计投入 {stats.hours_spent} 小时。",
+        f"新增 {stats.experiment_runs} 条实验运行记录，累计投入 {stats.hours_spent} 小时。",
     ]
     if weekly.projects:
         lines.append("")

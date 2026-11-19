@@ -75,7 +75,10 @@ def build_messages(project: Project, snapshots: list[ReplanTaskSnapshot], today:
         "4. 优先调整有风险的任务（逾期/阻塞/进度落后/工时不足），正常任务尽量不改；\n"
         "5. 阻塞类任务优先建议先解决前置任务，必要时顺延后续任务日期；\n"
         "6. reason 用中文写清楚为什么这样调；\n"
-        "7. 如果没有任务需要调整，changes 为空数组，plan_content 说明当前计划健康。"
+        "7. 如果没有任务需要调整，changes 为空数组，plan_content 说明当前计划健康；\n"
+        "8. 重规划只调整任务的执行安排（日期/优先级/工时），"
+        "不得建议修改研究假设、实验设计或实验结果——这些属于科研决策，"
+        "由研究者在研究分析模块中处理，不属于执行计划调整范围。"
     )
     user_lines = [
         f"项目：{project.name}",

@@ -2,6 +2,7 @@ import {
   AlertOctagon,
   AlertTriangle,
   Check,
+  FlaskConical,
   History,
   Loader2,
   RefreshCw,
@@ -47,6 +48,7 @@ export function ReplanTab({ projectId }: { projectId: number }) {
   const [processing, setProcessing] = useState(false)
 
   const riskyTasks = (data?.tasks ?? []).filter((task) => task.risk !== 'none')
+  const experimentRisks = data?.experimentRisks ?? []
 
   const handleGenerate = async () => {
     setGenerating(true)
@@ -155,6 +157,33 @@ export function ReplanTab({ projectId }: { projectId: number }) {
           </div>
         </CardContent>
       </Card>
+
+      {/* v2：实验维度的科研风险（停滞/失败），与任务时间风险并行 */}
+      {experimentRisks.length > 0 && (
+        <Card>
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle className="text-base">科研风险（实验维度）</CardTitle>
+              <CardDescription>实验停滞 / 失败待复盘——进度规则看不到的科研风险</CardDescription>
+            </div>
+            <Badge variant="destructive">{experimentRisks.length} 项</Badge>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            {experimentRisks.map((risk) => (
+              <div
+                key={risk.experimentId}
+                className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400"
+              >
+                <FlaskConical className="mt-0.5 size-4 shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-medium">{risk.title}</p>
+                  <p className="mt-0.5 text-xs opacity-90">{risk.reason}</p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* 当前方案：对比 + 采纳/放弃 */}
       {current && current.status === 'pending' && (

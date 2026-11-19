@@ -4,6 +4,7 @@ import {
   Clock3,
   Copy,
   FileText,
+  FlaskConical,
   ListChecks,
   Loader2,
   Sparkles,
@@ -94,7 +95,7 @@ export default function WeeklyReportPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         <Card>
           <CardContent className="flex items-center gap-4">
             <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -133,6 +134,20 @@ export default function WeeklyReportPage() {
               <div className="mt-0.5 text-2xl font-semibold tabular-nums">
                 {stats?.progressUpdates ?? 0}
                 <span className="ml-1 text-sm font-normal text-muted-foreground">条</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-4">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
+              <FlaskConical className="size-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm text-muted-foreground">实验运行</div>
+              <div className="mt-0.5 text-2xl font-semibold tabular-nums">
+                {stats?.experimentRuns ?? 0}
+                <span className="ml-1 text-sm font-normal text-muted-foreground">次</span>
               </div>
             </div>
           </CardContent>

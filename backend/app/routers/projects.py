@@ -1,11 +1,20 @@
 """项目 CRUD 接口（PRD §7.1）：创建 / 查询 / 修改 / 删除。"""
+from datetime import date
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Project, Task
-from app.schemas import ProjectCreate, ProjectDetailOut, ProjectSummary, ProjectUpdate
+from app.models import Experiment, Project, Task
+from app.schemas import (
+    ExperimentRiskOut,
+    ProjectCreate,
+    ProjectDetailOut,
+    ProjectSummary,
+    ProjectUpdate,
+)
+from app.services.risk import compute_experiment_risks
 from app.services.serializers import build_project_summary, build_task_out
 
 router = APIRouter(prefix="/projects", tags=["项目"])
@@ -61,12 +70,20 @@ def create_project(data: ProjectCreate, db: Session = Depends(get_db)):
 
 @router.get("/{project_id}", response_model=ProjectDetailOut)
 def get_project(project_id: int, db: Session = Depends(get_db)):
-    """项目详情：项目信息 + 任务树（每个任务附带风险标记）。"""
+    """项目详情：项目信息 + 任务树（每个任务附带风险标记）+ 实验科研风险（v2）。"""
     project = _get_project_or_404(db, project_id)
     tasks = _project_tasks(db, project_id)
+    experiments = db.scalars(
+        select(Experiment).where(Experiment.project_id == project_id)
+    ).all()
+    experiment_risks = [
+        ExperimentRiskOut(**risk)
+        for risk in compute_experiment_risks(experiments, date.today())
+    ]
     return ProjectDetailOut(
         project=build_project_summary(project, tasks),
         tasks=[build_task_out(t) for t in tasks],
+        experiment_risks=experiment_risks,
     )
 
 

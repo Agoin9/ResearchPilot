@@ -6,10 +6,27 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.config import UPLOAD_DIR
 from app.database import init_db
-from app.routers import ai, documents, home, projects, replans, report, reports, tasks
+from app.routers import (
+    ai,
+    analyses,
+    cards,
+    decisions,
+    documents,
+    experiments,
+    home,
+    projects,
+    questions,
+    replans,
+    report,
+    reports,
+    research_analyses,
+    tasks,
+)
 
 
 @asynccontextmanager
@@ -65,6 +82,13 @@ app.include_router(report.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
 app.include_router(replans.router, prefix="/api")
+# v2：科研工作台（研究问题 / 文献卡片 / 实验 / AI 分析 / 科研决策 / 研究分析）
+app.include_router(questions.router, prefix="/api")
+app.include_router(cards.router, prefix="/api")
+app.include_router(experiments.router, prefix="/api")
+app.include_router(analyses.router, prefix="/api")
+app.include_router(decisions.router, prefix="/api")
+app.include_router(research_analyses.router, prefix="/api")
 
 
 @app.exception_handler(RequestValidationError)
@@ -131,3 +155,8 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 def health():
     """健康检查：确认后端服务已启动。"""
     return {"status": "ok", "service": "ResearchPilot API"}
+
+
+# v2：实验附件图片静态服务（backend/uploads，目录不存在时先创建）
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/api/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")

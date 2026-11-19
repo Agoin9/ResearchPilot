@@ -1,0 +1,131 @@
+{
+  "id": 2,
+  "projectId": 6,
+  "questionId": 1,
+  "experimentIds": [
+    1,
+    2
+  ],
+  "runIds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "cardIds": [
+    1,
+    2
+  ],
+  "observedFacts": [
+    {
+      "experimentRunId": 3,
+      "content": "实验「【演示】方法A复现实验」第 3 次运行：Accuracy=86.4（备注：第3次运行）"
+    },
+    {
+      "experimentRunId": 6,
+      "content": "实验「【演示】方法B复现实验」第 3 次运行：Accuracy=80.1（备注：第3次运行）"
+    }
+  ],
+  "paperEvidence": [
+    {
+      "paperNoteId": 1,
+      "snippetId": "1-1",
+      "page": "5",
+      "quote": "方法A在数据集X上取得87.3%的精度",
+      "statement": "（演示模式）该证据来自文献卡片摘录，请人工核对原文"
+    },
+    {
+      "paperNoteId": 1,
+      "snippetId": "1-2",
+      "page": "6",
+      "quote": "相比基线平均提升2.1个百分点",
+      "statement": "（演示模式）该证据来自文献卡片摘录，请人工核对原文"
+    },
+    {
+      "paperNoteId": 2,
+      "snippetId": "2-1",
+      "page": "3",
+      "quote": "基线方法B的精度为80.1%",
+      "statement": "（演示模式）该证据来自文献卡片摘录，请人工核对原文"
+    }
+  ],
+  "stats": {
+    "metrics": [
+      {
+        "name": "Accuracy",
+        "unit": "%",
+        "higher_is_better": true,
+        "experiments": [
+          {
+            "experiment_id": 1,
+            "title": "【演示】方法A复现实验",
+            "run_count": 3,
+            "min": 81.2,
+            "max": 86.4,
+            "mean": 84.5,
+            "best": 86.4,
+            "best_run_no": 3,
+            "latest": 86.4,
+            "latest_run_no": 3
+          },
+          {
+            "experiment_id": 2,
+            "title": "【演示】方法B复现实验",
+            "run_count": 3,
+            "min": 79.8,
+            "max": 80.3,
+            "mean": 80.0667,
+            "best": 80.3,
+            "best_run_no": 2,
+            "latest": 80.1,
+            "latest_run_no": 3
+          }
+        ]
+      }
+    ],
+    "comparisons": [
+      {
+        "metric": "Accuracy",
+        "unit": "%",
+        "higher_is_better": true,
+        "rows": [
+          {
+            "experiment_id": 1,
+            "title": "【演示】方法A复现实验",
+            "best": 86.4,
+            "best_run_no": 3,
+            "delta_vs_first": 0.0
+          },
+          {
+            "experiment_id": 2,
+            "title": "【演示】方法B复现实验",
+            "best": 80.3,
+            "best_run_no": 2,
+            "delta_vs_first": -6.1
+          }
+        ]
+      }
+    ]
+  },
+  "interpretation": "（演示模式·推测性说明，非真实分析结论）后端确定性统计显示：Accuracy（【演示】方法A复现实验）：3 次运行，均值 84.5，最优 86.4（第 3 次）；Accuracy（【演示】方法B复现实验）：3 次运行，均值 80.0667，最优 80.3（第 2 次）。上述数值来自数据库真实记录的计算；解释文字为模板生成，请配置 DeepSeek API Key 获得真实分析。",
+  "hypothesisStatus": "insufficient_evidence",
+  "uncertainty": "（演示模式）模板生成：样本量、重复次数、潜在混杂因素等需由真实分析评估；当前内容不代表任何结论。",
+  "nextExperiments": [
+    {
+      "objective": "（演示模板）围绕关键变量设计一次对照实验",
+      "hypothesis": "（演示模板）调整关键变量后指标变化方向待验证",
+      "changedVariables": "（演示模板）待定",
+      "fixedConditions": "（演示模板）保持现有数据划分与评价方式不变",
+      "metrics": "（演示模板）沿用当前实验指标",
+      "expectedObservation": "（演示模板）待定",
+      "risks": "（演示模板）请人工评估",
+      "estimatedEffort": "（演示模板）待定",
+      "converted": false
+    }
+  ],
+  "source": "demo",
+  "warning": "演示模式：未配置 DeepSeek API Key。本分析的统计数值由后端基于数据库真实记录确定性计算，分析文字为模板生成，不代表真实分析结论；请在 backend/.env 配置 DEEPSEEK_API_KEY 后重新生成。",
+  "createdAt": "2026-11-11T21:35:38.574643"
+}

@@ -8,6 +8,12 @@ const PAGE_TITLES: Array<{ match: (pathname: string) => boolean; title: string }
   { match: (p) => p === '/board', title: '任务看板' },
   { match: (p) => p.startsWith('/projects/'), title: '项目仪表盘' },
   { match: (p) => p === '/report', title: '周报生成' },
+  { match: (p) => p === '/cockpit', title: '科研驾驶舱' },
+  { match: (p) => p === '/library', title: '文献研究库' },
+  { match: (p) => p === '/lab', title: '实验工作台' },
+  { match: (p) => p === '/compare', title: '实验结果比较' },
+  { match: (p) => p === '/decisions', title: '研究决策日志' },
+  { match: (p) => p.startsWith('/analysis/'), title: 'AI 研究分析报告' },
 ]
 
 /** 应用整体布局：左侧导航 + 顶栏 + 内容区 */

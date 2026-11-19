@@ -15,6 +15,9 @@ load_dotenv(BASE_DIR / ".env")
 # SQLite 数据库文件（backend/research.db，重启服务数据不丢失）
 DATABASE_URL = f"sqlite:///{(BASE_DIR / 'research.db').as_posix()}"
 
+# v2 实验附件上传目录（backend/uploads，不进 git）
+UPLOAD_DIR = BASE_DIR / "uploads"
+
 # ── DeepSeek API 配置（仅后端读取，绝不下发前端）─────────────────────────
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "").strip()
 DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com").rstrip("/")
@@ -34,3 +37,5 @@ BEHIND_PROGRESS_THRESHOLD = 20
 PROJECT_BEHIND_THRESHOLD = 20
 # 中风险任务达到该数量 → 项目中风险
 MEDIUM_TASK_COUNT_THRESHOLD = 3
+# v2 实验停滞：进行中/设计中的实验超过该天数无新运行记录 → 中风险提醒
+EXPERIMENT_STALL_DAYS = 7

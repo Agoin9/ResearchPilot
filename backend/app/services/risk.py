@@ -9,6 +9,7 @@ from datetime import date
 from app.config import (
     BEHIND_PROGRESS_THRESHOLD,
     ELAPSED_RATIO_THRESHOLD,
+    EXPERIMENT_STALL_DAYS,
     MEDIUM_TASK_COUNT_THRESHOLD,
     PROJECT_BEHIND_THRESHOLD,
 )
@@ -163,3 +164,59 @@ def compute_project_risk(
                 return RISK_MEDIUM, f"项目整体进度落后计划 {expected - actual}%"
 
     return RISK_NONE, ""
+
+
+# ═══════════════════════ v2：实验维度科研风险 ═══════════════════════
+# 与任务时间风险并行：科研停滞（长期无新运行记录）与失败实验待复盘，
+# 是科研工作特有的风险，进度维度规则无法覆盖。
+
+def compute_experiment_risks(
+    experiments: list,
+    today: date,
+) -> list[dict]:
+    """计算实验维度的科研风险（纯本地规则，可解释，不调 AI）。
+
+    experiments: Experiment ORM 列表（需带 runs 或 last_run_at 信息，
+    调用方自行聚合；这里按 experiment.runs 取最后一次运行时间）。
+
+    规则：
+    1. 实验失败 → 中风险「实验失败待复盘」；
+    2. 实验进行中/设计中，且超过 EXPERIMENT_STALL_DAYS 天没有新的运行记录
+       （从未运行过则从创建时间起算）→ 中风险「实验停滞」。
+    """
+    risks: list[dict] = []
+    for experiment in experiments:
+        if experiment.status == "failed":
+            risks.append(
+                {
+                    "experiment_id": experiment.id,
+                    "title": experiment.title,
+                    "level": RISK_MEDIUM,
+                    "reason": "实验失败，建议复盘失败原因或调整方案（AI 分析可基于已有运行记录给出建议）",
+                }
+            )
+            continue
+
+        if experiment.status not in ("running", "draft"):
+            continue
+
+        runs = getattr(experiment, "runs", None) or []
+        last_run_at = None
+        if runs:
+            last_run_at = max(r.created_at for r in runs).date()
+        reference = last_run_at or (experiment.created_at.date() if experiment.created_at else today)
+        idle_days = (today - reference).days
+        if idle_days > EXPERIMENT_STALL_DAYS:
+            risks.append(
+                {
+                    "experiment_id": experiment.id,
+                    "title": experiment.title,
+                    "level": RISK_MEDIUM,
+                    "reason": (
+                        f"实验已停滞 {idle_days} 天（距最近一次运行记录），"
+                        "建议继续推进或更新实验状态"
+                    ),
+                }
+            )
+    return risks
+
